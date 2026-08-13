@@ -454,15 +454,8 @@ class LprCataway(http.Controller):
     def _send_bus_notification(self, env, event_type, event_data, channel='lpr_camera_control'):
         """Изпраща bus уведомление"""
         try:
-            if hasattr(env, 'bus_bus'):
-                env['bus.bus']._sendone(
-                    channel,
-                    {
-                        'type': event_type,
-                        'data': event_data
-                    }
-                )
-                _logger.debug(f"🚌 Bus уведомление изпратено: {event_type}")
+            env['bus.bus']._sendone(channel, event_type, event_data)
+            _logger.debug(f"🚌 Bus уведомление изпратено: {event_type}")
         except Exception as e:
             _logger.warning(f"Не успя да изпрати bus уведомление: {str(e)}")
 

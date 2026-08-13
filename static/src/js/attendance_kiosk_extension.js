@@ -1,20 +1,32 @@
 /** @odoo-module **/
 
-import { AttendanceKioskMode } from "@hr_attendance/js/kiosk_mode";
+// В Odoo 18 публичният киоск е Owl компонент в public_kiosk_app.js.
+// Старият "@hr_attendance/js/kiosk_mode" не съществува — импортът му
+// събаряше целия frontend бъндъл още при зареждане.
+import publicKioskApp from "@hr_attendance/public_kiosk/public_kiosk_app";
 import { patch } from "@web/core/utils/patch";
+import { rpc } from "@web/core/network/rpc";
+import { useService } from "@web/core/utils/hooks";
+import { onWillDestroy } from "@odoo/owl";
 
-patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extension", {
+// Един канал за целия модул; типовете съвпадат с тези, които
+// изпраща сървърът през bus.bus._sendone(channel, type, payload).
+const LPR_BUS_CHANNEL = "lpr_camera_control";
+
+patch(publicKioskApp.kioskAttendanceApp.prototype, {
 
     setup() {
-        this._super(...arguments);
+        super.setup(...arguments);
 
-        // В Odoo 18 сервисите се достъпват чрез this.env.services
-        this.bus = this.env.services.bus_service;
-        this.notification = this.env.services.notification;
+        this.busService = useService("bus_service");
+        this.notification = useService("notification");
 
         this.cameraConfig = null;
         this.busConnected = false;
         this.autoCheckIn = true;
+        this.lprSubscriptions = [];
+
+        onWillDestroy(() => this.teardownLprIntegration());
 
         this.initLprIntegration();
     },
@@ -22,7 +34,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
     async initLprIntegration() {
         try {
             // Зареждаме конфигурацията за LPR
-            const response = await this.env.services.rpc("/lpr_camera/config");
+            const response = await rpc("/lpr_camera/config");
 
             if (response.status === 'success' && response.cameras.length > 0) {
                 this.cameraConfig = response.cameras;
@@ -42,11 +54,21 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
         console.log('🚌 Настройване на Bus listener за attendance kiosk...');
 
         try {
-            // Слушаме за LPR събития от контролера
-            this.bus.addEventListener("lpr_camera_control", (event) => {
-                console.log("🚌 Bus събитие получено в attendance kiosk:", event.detail);
-                this.handleBusEvent(event.detail);
-            });
+            // В Odoo 18 се абонираме за ТИП събитие, а каналът се добавя
+            // отделно; payload-ът идва директно, без event.detail.
+            const handlers = {
+                lpr_event_detected: (payload) => this.handleLprEventDetected(payload),
+                lpr_access_result: (payload) => this.handleLprAccessResult(payload),
+                lpr_attendance_created: (payload) => this.handleAttendanceCreated(payload),
+                lpr_error: (payload) => this.handleLprError(payload),
+            };
+
+            for (const [type, handler] of Object.entries(handlers)) {
+                this.busService.subscribe(type, handler);
+                this.lprSubscriptions.push([type, handler]);
+            }
+
+            this.busService.addChannel(LPR_BUS_CHANNEL);
 
             this.busConnected = true;
             console.log('✅ Bus listener настроен успешно за attendance');
@@ -62,9 +84,17 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
         }
     },
 
+    teardownLprIntegration() {
+        for (const [type, handler] of this.lprSubscriptions || []) {
+            this.busService.unsubscribe(type, handler);
+        }
+        this.lprSubscriptions = [];
+        this.busService?.deleteChannel(LPR_BUS_CHANNEL);
+    },
+
     async testBusConnection() {
         try {
-            const response = await this.env.services.rpc("/lpr_camera/bus_status");
+            const response = await rpc("/lpr_camera/bus_status");
             console.log('🚌 Bus статус за attendance:', response);
 
             if (response.status === 'success' && response.bus_active) {
@@ -80,33 +110,6 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
             console.error("❌ Грешка при проверка на Bus статус:", error);
             this.busConnected = false;
             this.displayLprStatus('disconnected');
-        }
-    },
-
-    handleBusEvent(eventDetail) {
-        const { type, data } = eventDetail;
-
-        console.log(`🚌 Обработка на Bus събитие в attendance: ${type}`, data);
-
-        switch (type) {
-            case 'lpr_event_detected':
-                this.handleLprEventDetected(data);
-                break;
-
-            case 'lpr_access_result':
-                this.handleLprAccessResult(data);
-                break;
-
-            case 'lpr_attendance_created':
-                this.handleAttendanceCreated(data);
-                break;
-
-            case 'lpr_error':
-                this.handleLprError(data);
-                break;
-
-            default:
-                console.log(`🚌 Неизвестен Bus event тип в attendance: ${type}`);
         }
     },
 
@@ -187,7 +190,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
     async performAutoCheckInByPlate(plateNumber) {
         try {
             // Търсим служителя по регистрирания автомобил
-            const carRegistries = await this.env.services.rpc("/web/dataset/call_kw", {
+            const carRegistries = await rpc("/web/dataset/call_kw", {
                 model: "car.registry",
                 method: "search_read",
                 args: [
@@ -213,7 +216,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
     async performAutoCheckIn(employeeId) {
         try {
             // Извършваме автоматично отбелязване
-            await this.env.services.rpc("/web/dataset/call_kw", {
+            await rpc("/web/dataset/call_kw", {
                 model: "hr.attendance",
                 method: "attendance_action_change",
                 args: [[employeeId]],
@@ -221,7 +224,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
             });
 
             // Зареждаме информацията за служителя
-            const employees = await this.env.services.rpc("/web/dataset/call_kw", {
+            const employees = await rpc("/web/dataset/call_kw", {
                 model: "hr.employee",
                 method: "read",
                 args: [[employeeId], ["name"]],
@@ -239,7 +242,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
 
     async loadRecentEvents() {
         try {
-            const response = await this.env.services.rpc("/lpr_camera/recent_events", { limit: 5 });
+            const response = await rpc("/lpr_camera/recent_events", { limit: 5 });
 
             if (response.status === 'success') {
                 const eventsPanel = document.getElementById('lpr-recent-events');
@@ -333,7 +336,7 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
 
     async testBusNotification() {
         try {
-            const response = await this.env.services.rpc("/lpr_camera/test_bus");
+            const response = await rpc("/lpr_camera/test_bus");
             console.log('🧪 Test bus response от attendance:', response);
 
             if (response.status === 'success') {
@@ -359,12 +362,6 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
         // Показваме съобщение в attendance интерфейса
         if (this.notification) {
             this.notification.add(message, { type: type, sticky: false });
-        } else {
-            // Fallback за по-стари версии на Odoo
-            const notification = this.env?.services?.notification;
-            if (notification) {
-                notification.add(message, { type: type, sticky: false });
-            }
         }
 
         console.log(`LPR Attendance [${type}]: ${message}`);
@@ -415,12 +412,4 @@ patch(AttendanceKioskMode.prototype, "lpr_camera_control.attendance_kiosk_extens
             }
         }
     },
-
-    destroy() {
-        // Почистваме Bus listener вместо MQTT
-        if (this.bus && this.busListener) {
-            this.bus.removeEventListener("lpr_camera_control", this.busListener);
-        }
-        this._super(...arguments);
-    }
 });

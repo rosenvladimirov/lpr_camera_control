@@ -13,9 +13,9 @@ import { Component, onWillStart, onMounted, onWillUnmount } from "@odoo/owl";
  * LPR Camera Kanban Controller Extension
  * Слуша Bus шината за ping събития и актуализира цветните индикатори в реално време
  */
-patch(KanbanController.prototype, "lpr_camera_control.kanban_controller", {
+patch(KanbanController.prototype, {
     setup() {
-        this._super(...arguments);
+        super.setup(...arguments);
 
         this.busService = useService("bus_service");
         this.notification = useService("notification");
@@ -41,37 +41,27 @@ patch(KanbanController.prototype, "lpr_camera_control.kanban_controller", {
 
         try {
             // Слушаме за ping резултати от отделни камери
-            const pingResultListener = (event) => {
-                const eventData = event.detail;
-                if (eventData && eventData.type === 'lpr_camera_ping_result') {
-                    this.handleCameraPingResult(eventData.data);
-                }
-            };
-
-            this.busService.addEventListener("lpr_camera_ping_result", pingResultListener);
+            const pingResultListener = (payload) => this.handleCameraPingResult(payload);
+            this.busService.subscribe("lpr_camera_ping_result", pingResultListener);
             this.busListeners.push({ event: "lpr_camera_ping_result", listener: pingResultListener });
 
             // Слушаме за обобщени ping резултати
-            const pingSummaryListener = (event) => {
-                const eventData = event.detail;
-                if (eventData && eventData.type === 'lpr_camera_ping_summary') {
-                    this.handlePingSummary(eventData.data);
-                }
-            };
-
-            this.busService.addEventListener("lpr_camera_ping_summary", pingSummaryListener);
+            const pingSummaryListener = (payload) => this.handlePingSummary(payload);
+            this.busService.subscribe("lpr_camera_ping_summary", pingSummaryListener);
             this.busListeners.push({ event: "lpr_camera_ping_summary", listener: pingSummaryListener });
 
             // Слушаме за LPR събития за актуализация на last_seen
-            const lprEventListener = (event) => {
-                const eventData = event.detail;
-                if (eventData && eventData.data && eventData.data.camera_name) {
-                    this.handleLprEvent(eventData.data);
+            const lprEventListener = (payload) => {
+                if (payload && payload.camera_name) {
+                    this.handleLprEvent(payload);
                 }
             };
 
-            this.busService.addEventListener("lpr_camera_control", lprEventListener);
-            this.busListeners.push({ event: "lpr_camera_control", listener: lprEventListener });
+            this.busService.subscribe("lpr_event_detected", lprEventListener);
+            this.busListeners.push({ event: "lpr_event_detected", listener: lprEventListener });
+
+            // Каналът се добавя веднъж, след като абонаментите са налице
+            this.busService.addChannel("lpr_camera_control");
 
             console.log('✅ Bus listeners настроени успешно за LPR Camera Kanban');
 
@@ -85,7 +75,7 @@ patch(KanbanController.prototype, "lpr_camera_control.kanban_controller", {
 
         this.busListeners.forEach(({ event, listener }) => {
             try {
-                this.busService.removeEventListener(event, listener);
+                this.busService.unsubscribe(event, listener);
             } catch (error) {
                 console.warn(`⚠️ Грешка при премахване на listener ${event}:`, error);
             }
@@ -335,9 +325,9 @@ patch(KanbanController.prototype, "lpr_camera_control.kanban_controller", {
  * LPR Camera Kanban Renderer Extension
  * Добавя допълнителни контроли в kanban view
  */
-patch(KanbanRenderer.prototype, "lpr_camera_control.kanban_renderer", {
+patch(KanbanRenderer.prototype, {
     setup() {
-        this._super(...arguments);
+        super.setup(...arguments);
         this.isLprCameraModel = this.props.list.model.config.resModel === 'lpr.camera.config';
     }
 });

@@ -294,14 +294,8 @@ class LprEvent(models.Model):
                 'state': parking_session.state
             }
 
-            if hasattr(self.env, 'bus_bus'):
-                self.env['bus.bus']._sendone(
-                    'lpr_camera_control',
-                    {
-                        'type': 'parking_event',
-                        'data': notification_data
-                    }
-                )
+            self.env['bus.bus']._sendone(
+                'lpr_camera_control', 'parking_event', notification_data)
         except Exception as e:
             # Не спираме процеса ако bus уведомлението не успее
             pass

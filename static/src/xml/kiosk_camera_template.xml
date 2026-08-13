@@ -1,6 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo>
-    <template id="KioskCameraTemplate" name="LPR Camera Kiosk Template">
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="lpr_camera_control.KioskCameraTemplate">
         <div class="lpr-kiosk-container">
             <!-- Header with status -->
             <div class="lpr-header">
@@ -179,5 +179,5 @@
                 </div>
             </div>
         </div>
-    </template>
-</odoo>
+    </t>
+</templates>

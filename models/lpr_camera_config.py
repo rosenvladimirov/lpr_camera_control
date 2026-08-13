@@ -281,7 +281,7 @@ class LprCameraConfig(models.Model):
                     _logger.warning(f"❌ {message}")
 
                 # Изпращаме Bus нотификация
-                env['bus.bus']._sendone('lpr_camera_ping_result', {
+                env['bus.bus']._sendone('lpr_camera_control', 'lpr_camera_ping_result', {
                     'camera_id': camera_id,
                     'camera_name': name,
                     'ip_address': ip_address,
@@ -652,7 +652,7 @@ class LprCameraPingThread(threading.Thread):
 
                 # Изпращаме Bus notification за резултатите
                 if total_checked > 0:
-                    env['bus.bus']._sendone('lpr_camera_ping_summary', {
+                    env['bus.bus']._sendone('lpr_camera_control', 'lpr_camera_ping_summary', {
                         'timestamp': self.last_ping_cycle.isoformat(),
                         'total_cameras': total_checked,
                         'online_cameras': online_count,

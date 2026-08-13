@@ -534,18 +534,17 @@ class ONVIFBarrierController:
                         'raw_data': json.dumps(event_data, ensure_ascii=False, indent=2),
                     })
 
-                    # Изпращаме bus notification
-                    if hasattr(env, 'bus_bus'):
-                        env['bus.bus']._sendone(
-                            'onvif_camera_events',
-                            'onvif_event',
-                            {
-                                'camera_id': self.camera_id,
-                                'event_type': event_data['event_type'],
-                                'barrier_name': self.barrier_name,
-                                'timestamp': event_data['timestamp']
-                            }
-                        )
+                    # Изпращаме bus notification по общия канал на модула
+                    env['bus.bus']._sendone(
+                        'lpr_camera_control',
+                        'onvif_event',
+                        {
+                            'camera_id': self.camera_id,
+                            'event_type': event_data['event_type'],
+                            'barrier_name': self.barrier_name,
+                            'timestamp': event_data['timestamp']
+                        }
+                    )
 
                 cr.commit()
 

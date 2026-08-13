@@ -141,7 +141,8 @@ class LPRKioskController(http.Controller):
                 [], limit=1, order='create_date desc'
             )
 
-            bus_available = hasattr(request.env, 'bus_bus')
+            # env няма атрибут bus_bus — проверява се дали модулът е зареден
+            bus_available = 'bus.bus' in request.env
 
             status_info = {
                 'kiosk_ready': camera_count > 0 and bus_available,
@@ -189,6 +190,102 @@ class LPRKioskController(http.Controller):
                 f"Грешка при проверка на статус: {str(e)}",
                 status=500
             )
+
+    # ==================== BUS TEST PANEL ====================
+    # Тези маршрути обслужват тестовия панел на киоска. Каналът е твърдо
+    # зададен тук — клиентът не може да избира по кой канал се излъчва.
+
+    BUS_CHANNEL = 'lpr_camera_control'
+
+    def _push(self, event_type, payload):
+        """Излъчва по общия канал на модула"""
+        request.env['bus.bus']._sendone(self.BUS_CHANNEL, event_type, payload)
+
+    @http.route('/lpr_camera/bus_status', type='json', auth='user')
+    def bus_status(self):
+        """Дали bus модулът е наличен"""
+        return {
+            'status': 'success',
+            'bus_active': 'bus.bus' in request.env,
+            'channel': self.BUS_CHANNEL,
+        }
+
+    @http.route('/lpr_camera/test_bus', type='json', auth='user')
+    def test_bus(self):
+        """Изпраща тестово съобщение по шината"""
+        try:
+            self._push('lpr_test_event', {
+                'message': _('Test notification from the LPR kiosk'),
+                'timestamp': fields.Datetime.now().isoformat(),
+                'user': request.env.user.name,
+            })
+            return {'status': 'success'}
+        except Exception as e:
+            _logger.warning(f"test_bus се провали: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/lpr_camera/send_bus_notification', type='json', auth='user')
+    def send_bus_notification(self, event_type=None, event_data=None, **kwargs):
+        """Излъчва произволен тип събитие с подадените данни"""
+        if not event_type:
+            return {'status': 'error', 'message': _('Missing event type')}
+        try:
+            self._push(event_type, event_data or {})
+            return {'status': 'success'}
+        except Exception as e:
+            _logger.warning(f"send_bus_notification се провали: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/lpr_camera/trigger_lpr_event', type='json', auth='user')
+    def trigger_lpr_event(self, plate_number=None, camera_name=None, **kwargs):
+        """Симулира засечен номер"""
+        try:
+            event_data = {
+                'plate': plate_number or 'TEST123',
+                'camera_name': camera_name or _('Test Camera'),
+                'timestamp': fields.Datetime.now().isoformat(),
+                'confidence': 0.95,
+                'image_path': None,
+            }
+            self._push('lpr_event_detected', event_data)
+            return {'status': 'success', 'event_data': event_data}
+        except Exception as e:
+            _logger.warning(f"trigger_lpr_event се провали: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/lpr_camera/trigger_access_result', type='json', auth='user')
+    def trigger_access_result(self, plate_number=None, access_granted=True, **kwargs):
+        """Симулира решение за достъп"""
+        try:
+            granted = bool(access_granted)
+            access_data = {
+                'plate': plate_number or 'TEST123',
+                'access_granted': granted,
+                'access_reason': _('Simulated from the test panel'),
+                'owner_name': request.env.user.name,
+                'access_type': 'employee',
+                'camera_name': _('Test Camera'),
+            }
+            self._push('lpr_access_result', access_data)
+            return {'status': 'success', 'access_data': access_data}
+        except Exception as e:
+            _logger.warning(f"trigger_access_result се провали: {e}")
+            return {'status': 'error', 'message': str(e)}
+
+    @http.route('/lpr_camera/broadcast', type='json', auth='user')
+    def broadcast(self, message=None, message_type='info', **kwargs):
+        """Разпраща съобщение до всички слушащи клиенти"""
+        try:
+            self._push('lpr_broadcast', {
+                'message': message or '',
+                'message_type': message_type,
+                'sender': request.env.user.name,
+                'timestamp': fields.Datetime.now().isoformat(),
+            })
+            return {'status': 'success'}
+        except Exception as e:
+            _logger.warning(f"broadcast се провали: {e}")
+            return {'status': 'error', 'message': str(e)}
 
     # ==================== HELPER METHODS ====================
 

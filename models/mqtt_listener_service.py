@@ -413,21 +413,22 @@ class MqttListenerThread(threading.Thread):
     def send_realtime_notification(self, env, lpr_event, raw_data):
         """Изпраща real-time notification към frontend (опционално)"""
         try:
-            # Можем да използваме bus notification за real-time updates
-            if hasattr(env, 'bus_bus'):  # Odoo 18 bus модул
-                env['bus.bus']._sendone(
-                    'lpr_events',
-                    'new_event',
-                    {
-                        'event_id': lpr_event.id,
-                        'plate': lpr_event.plate_number,
-                        'camera': lpr_event.camera_id.name,
-                        'time': lpr_event.event_time.isoformat() if lpr_event.event_time else None,
-                        'access_granted': lpr_event.access_granted,
-                        'access_reason': lpr_event.access_reason,
-                    }
-                )
-                _logger.debug("Bus notification изпратена")
+            # Един канал за целия модул; типът е второто позиционно
+            # на _sendone. Ключовете съвпадат с тези от gateway-а, за да
+            # има frontend-ът една форма на payload-а.
+            env['bus.bus']._sendone(
+                'lpr_camera_control',
+                'lpr_event_detected',
+                {
+                    'event_id': lpr_event.id,
+                    'plate': lpr_event.plate_number,
+                    'camera_name': lpr_event.camera_id.name,
+                    'timestamp': lpr_event.event_time.isoformat() if lpr_event.event_time else None,
+                    'access_granted': lpr_event.access_granted,
+                    'access_reason': lpr_event.access_reason,
+                }
+            )
+            _logger.debug("Bus notification изпратена")
         except Exception as e:
             _logger.warning(f"Не успя да изпрати bus notification: {e}")
 

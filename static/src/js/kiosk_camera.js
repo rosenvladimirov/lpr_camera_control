@@ -4,38 +4,19 @@
 import { Component, useState, onMounted, onWillUnmount } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
+import { rpc } from "@web/core/network/rpc";
+
+// Един канал за модула; типовете идват като второ позиционно на _sendone
+const LPR_BUS_CHANNEL = "lpr_camera_control";
 
 export class KioskCameraComponent extends Component {
-    static template = "lpr_camera_stream.KioskCameraTemplate";
+    static template = "lpr_camera_control.KioskCameraTemplate";
 
     setup() {
-        console.log("🔍 Налични сервиси:", this.env.services ? Object.keys(this.env.services) : "Няма services");
-
-        // Опитваме се да заредим сервисите безопасно
-        try {
-            this.notification = useService("notification");
-        } catch (e) {
-            console.warn("Notification service не е намерен:", e);
-            this.notification = null;
-        }
-
-        // Опитваме различни варианти за bus сервиса
-        this.bus = null;
-        const busServiceNames = ["bus", "bus_service", "longpolling", "websocket"];
-
-        for (const serviceName of busServiceNames) {
-            try {
-                this.bus = useService(serviceName);
-                console.log(`✅ Намерен bus сервис: ${serviceName}`);
-                break;
-            } catch (e) {
-                console.warn(`Bus service '${serviceName}' не е намерен:`, e);
-            }
-        }
-
-        if (!this.bus) {
-            console.warn("❌ Няма наличен bus сервис - ще използваме polling");
-        }
+        // useService е hook — вика се безусловно и в фиксиран ред,
+        // иначе Owl губи съответствието между hook-овете при повторен render
+        this.notification = useService("notification");
+        this.bus = useService("bus_service");
 
         this.state = useState({
             camera: null,
@@ -133,20 +114,9 @@ export class KioskCameraComponent extends Component {
 
     async makeJsonRpcCall(url, data = {}) {
         try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            return await response.json();
+            // rpc() слага JSON-RPC 2.0 обвивката и разопакова "result";
+            // суровият fetch оставяше сървъра без параметри
+            return await rpc(url, data);
         } catch (error) {
             console.error(`❌ Грешка при ${url}:`, error);
             throw error;
@@ -165,11 +135,18 @@ export class KioskCameraComponent extends Component {
         }
 
         try {
-            // Слушаме за LPR събития от контролера
-            this.bus.addEventListener("lpr_camera_stream", (event) => {
-                console.log("🚌 Bus събитие получено:", event.detail);
-                this.handleBusEvent(event.detail);
-            });
+            // Слушаме за LPR събития от контролера. В 18 се абонираме
+            // за всеки ТИП поотделно; payload-ът идва директно.
+            this.busSubscriptions = [];
+            for (const type of [
+                "lpr_event_detected", "lpr_access_result", "lpr_attendance_created",
+                "parking_event", "lpr_error", "lpr_test_event", "lpr_broadcast",
+            ]) {
+                const handler = (payload) => this.handleBusEvent({ type, data: payload });
+                this.bus.subscribe(type, handler);
+                this.busSubscriptions.push([type, handler]);
+            }
+            this.bus.addChannel(LPR_BUS_CHANNEL);
 
             this.state.busConnected = true;
             console.log('✅ Bus listener настроен успешно');
@@ -570,7 +547,6 @@ export class KioskCameraComponent extends Component {
             const response = await this.makeJsonRpcCall("/lpr_camera/send_bus_notification", {
                 event_type: eventData.type,
                 event_data: eventData.data,
-                channel: 'lpr_camera_stream'
             });
 
             if (response.status === 'success') {
@@ -798,10 +774,12 @@ export class KioskCameraComponent extends Component {
             clearTimeout(this.overlayTimeout);
         }
 
-        // Почистваме Bus listener
-        if (this.busListener && this.bus) {
-            this.bus.removeEventListener("lpr_camera_stream", this.busListener);
+        // Почистваме Bus абонаментите
+        for (const [type, handler] of this.busSubscriptions || []) {
+            this.bus.unsubscribe(type, handler);
         }
+        this.busSubscriptions = [];
+        this.bus?.deleteChannel(LPR_BUS_CHANNEL);
 
         // Почистваме polling interval
         if (this.busPollingInterval) {
