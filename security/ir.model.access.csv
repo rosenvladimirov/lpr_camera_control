@@ -3,3 +3,11 @@ access_lpr_camera_config_user,lpr.camera.config.user,model_lpr_camera_config,bas
 access_lpr_camera_config_manager,lpr.camera.config.manager,model_lpr_camera_config,hr.group_hr_manager,1,1,1,1
 access_lpr_event_user,lpr.event.user,model_lpr_event,base.group_user,1,0,0,0
 access_lpr_event_manager,lpr.event.manager,model_lpr_event,hr.group_hr_manager,1,1,1,1
+access_car_registry_user,car.registry.user,model_car_registry,base.group_user,1,0,0,0
+access_car_registry_manager,car.registry.manager,model_car_registry,hr.group_hr_manager,1,1,1,1
+access_parking_session_user,parking.session.user,model_parking_session,base.group_user,1,0,0,0
+access_parking_session_manager,parking.session.manager,model_parking_session,hr.group_hr_manager,1,1,1,1
+access_onvif_camera_event_user,onvif.camera.event.user,model_onvif_camera_event,base.group_user,1,0,0,0
+access_onvif_camera_event_manager,onvif.camera.event.manager,model_onvif_camera_event,hr.group_hr_manager,1,1,1,1
+access_mqtt_listener_service_manager,mqtt.listener.service.manager,model_mqtt_listener_service,hr.group_hr_manager,1,1,1,1
+access_onvif_camera_service_manager,onvif.camera.service.manager,model_onvif_camera_service,hr.group_hr_manager,1,1,1,1

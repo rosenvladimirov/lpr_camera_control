@@ -8,7 +8,7 @@
                 <title>LPR Camera Kiosk - Избор на камера</title>
 
                 <!-- Kiosk CSS -->
-                <link rel="stylesheet" type="text/css" href="//static/src/css/kiosk_camera.css"/>
+                <link rel="stylesheet" type="text/css" href="/lpr_camera_control/static/src/css/kiosk_camera.css"/>
             </t>
 
             <div class="lpr-kiosk-container">

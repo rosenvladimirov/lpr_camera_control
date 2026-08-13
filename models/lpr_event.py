@@ -8,6 +8,8 @@ import json
 class LprEvent(models.Model):
     _name = 'lpr.event'
     _description = 'LPR Camera Event'
+    # Формата носи чатър — без миксина валидацията на изгледа пада при инсталация
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
 
     name = fields.Char('Event Name', compute='_compute_name', store=True)

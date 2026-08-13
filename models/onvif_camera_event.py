@@ -6,6 +6,8 @@ from datetime import datetime
 class ONVIFCameraEvent(models.Model):
     _name = 'onvif.camera.event'
     _description = 'ONVIF Camera Events'
+    # Формата носи чатър — без миксина валидацията на изгледа пада при инсталация
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = 'create_date desc'
 
     name = fields.Char('Event Name', compute='_compute_name', store=True)

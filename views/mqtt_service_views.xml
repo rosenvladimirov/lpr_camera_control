@@ -42,7 +42,7 @@
 
     <menuitem id="menu_mqtt_service"
               name="MQTT Service"
-              parent="hr.menu_hr_configuration"
+              parent="hr.menu_human_resources_configuration"
               action="action_mqtt_service"
               groups="hr.group_hr_manager"/>
 </odoo>

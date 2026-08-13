@@ -5,7 +5,7 @@
 
         <!-- Добавяме LPR CSS файлове -->
         <xpath expr="//t[@t-call-assets='hr_attendance.assets_public_attendance'][@t-css='false']" position="after">
-            <link rel="stylesheet" href="//static/src/css/attendance_kiosk_extension.css"/>
+            <link rel="stylesheet" href="/lpr_camera_control/static/src/css/attendance_kiosk_extension.css"/>
         </xpath>
 
         <!-- Добавяме LPR JavaScript модули -->

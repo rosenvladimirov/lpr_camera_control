@@ -26,22 +26,31 @@
     'development_status': 'Beta',
     'depends': [
         'base',
+        'mail',
         'hr',
         'hr_attendance',
         'fleet',
         'web',
         'bus',
-        'product_manufacturer',  # OCA модул за производители
+        # Моделът product.manufacturer идва от product_manufacturer_data
+        # (product-attribute-expert), НЕ от OCA product_manufacturer —
+        # там manufacturer_id сочи към res.partner и модел няма.
+        'product_manufacturer_data',
     ],
     'data': [
         'security/ir.model.access.csv',
         'data/cron_jobs.xml',
+        # Камерите са базовият обект — изгледите им се зареждат първи
+        'views/lpr_camera_config.xml',
         'views/lpr_event_views.xml',
         'views/mqtt_service_views.xml',
         'views/onvif_camera_event_views.xml',
         'views/attendance_kiosk_inherit.xml',
         'views/car_registry_views.xml',
         'views/parking_session_views.xml',
+        # Публични QWeb шаблони за kiosk режима
+        'views/kiosk_camera_list_template.xml',
+        'views/kiosk_fullscreen_template.xml',
         'views/webrtc_player_template.xml',
     ],
     'demo': [

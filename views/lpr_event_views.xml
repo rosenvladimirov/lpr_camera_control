@@ -5,7 +5,7 @@
         <field name="name">lpr.event.tree</field>
         <field name="model">lpr.event</field>
         <field name="arch" type="xml">
-            <tree decoration-success="access_granted == True and processing_status == 'processed'"
+            <list decoration-success="access_granted == True and processing_status == 'processed'"
                   decoration-danger="access_granted == False or processing_status == 'access_denied'"
                   decoration-warning="processing_status == 'error'"
                   decoration-muted="processing_status == 'ignored'">
@@ -19,7 +19,7 @@
                 <field name="access_reason"/>
                 <field name="processing_status"/>
                 <field name="processed"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -36,7 +36,7 @@
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_attendance" type="object"
                                 class="oe_stat_button" icon="fa-clock-o"
-                                attrs="{'invisible': [('attendance_id', '=', False)]}">
+                                invisible="not attendance_id">
                             <div class="o_field_widget o_stat_info">
                                 <span class="o_stat_text">Attendance</span>
                             </div>
@@ -62,7 +62,7 @@
                             <field name="access_granted" widget="boolean_toggle"/>
                             <field name="access_reason"/>
                             <field name="processed" widget="boolean_toggle"/>
-                            <field name="error_message" attrs="{'invisible': [('error_message', '=', False)]}"/>
+                            <field name="error_message" invisible="not error_message"/>
                         </group>
                     </group>
 
@@ -85,10 +85,7 @@
                         </page>
                     </notebook>
                 </sheet>
-                <div class="oe_chatter">
-                    <field name="message_follower_ids"/>
-                    <field name="message_ids"/>
-                </div>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -121,9 +118,9 @@
                         domain="[('event_time', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
                                 ('event_time', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]"/>
                 <filter string="Тази седмица" name="this_week"
-                        domain="[('event_time', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%%Y-%%m-%%d'))]"/>
+                        domain="[('event_time', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%Y-%m-%d'))]"/>
                 <filter string="Този месец" name="this_month"
-                        domain="[('event_time', '&gt;=', datetime.datetime.now().strftime('%%Y-%%m-01'))]"/>
+                        domain="[('event_time', '&gt;=', datetime.datetime.now().strftime('%Y-%m-01'))]"/>
 
                 <group expand="0" string="Групиране">
                     <filter string="Камера" name="group_camera" context="{'group_by': 'camera_id'}"/>
@@ -250,7 +247,7 @@
     <record id="action_lpr_event" model="ir.actions.act_window">
         <field name="name">LPR События</field>
         <field name="res_model">lpr.event</field>
-        <field name="view_mode">tree,form,kanban,calendar,graph,pivot</field>
+        <field name="view_mode">list,form,kanban,calendar,graph,pivot</field>
         <field name="context">{'search_default_today': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
@@ -267,7 +264,7 @@
     <record id="action_lpr_event_today" model="ir.actions.act_window">
         <field name="name">Днешни LPR събития</field>
         <field name="res_model">lpr.event</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="context">{'search_default_today': 1}</field>
         <field name="domain">[('event_time', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
                            ('event_time', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]</field>
@@ -276,7 +273,7 @@
     <record id="action_lpr_event_access_denied" model="ir.actions.act_window">
         <field name="name">Отказан достъп</field>
         <field name="res_model">lpr.event</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">list,form,kanban</field>
         <field name="context">{'search_default_access_denied': 1}</field>
         <field name="domain">[('access_granted', '=', False)]</field>
     </record>
@@ -284,7 +281,7 @@
     <record id="action_lpr_event_errors" model="ir.actions.act_window">
         <field name="name">LPR грешки</field>
         <field name="res_model">lpr.event</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="context">{'search_default_errors': 1}</field>
         <field name="domain">[('processing_status', '=', 'error')]</field>
     </record>

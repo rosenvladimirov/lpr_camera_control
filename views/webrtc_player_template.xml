@@ -1,4 +1,3 @@
-
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="webrtc_player_template" name="WebRTC Player">
@@ -21,7 +20,7 @@
                 </div>
 
                 <!-- Използвайте локалната версия 9.0.2 -->
-                <script src="//static/lib/adapter.js"></script>
+                <script src="/lpr_camera_control/static/lib/adapter.js"></script>
                 <script>
                     class WebRTCPlayer {
                         constructor(videoElement, streamUrl) {
@@ -55,7 +54,7 @@
                             }
 
                             // Проверка за development ports
-                            if (port && (port === '8069' || port === '8080' || port === '3000' || port === '8000')) {
+                            if (port &amp;&amp; (port === '8069' || port === '8080' || port === '3000' || port === '8000')) {
                                 return { type: 'development', useIce: false };
                             }
 
@@ -204,7 +203,7 @@
                             if (this.pc) {
                                 const stats = await this.pc.getStats();
                                 stats.forEach(report => {
-                                    if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                    if (report.type === 'candidate-pair' &amp;&amp; report.state === 'succeeded') {
                                         console.log('🏆 Active ICE candidate pair:', report);
                                     }
                                 });

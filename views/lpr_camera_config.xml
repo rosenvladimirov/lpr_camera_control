@@ -6,7 +6,7 @@
         <field name="name">lpr.camera.config.tree</field>
         <field name="model">lpr.camera.config</field>
         <field name="arch" type="xml">
-            <tree string="LPR Cameras" sample="1" decoration-danger="connection_status=='offline'"
+            <list string="LPR Cameras" sample="1" decoration-danger="connection_status=='offline'"
                   decoration-success="connection_status=='online'" decoration-muted="not active">
                 <field name="name"/>
                 <field name="ip_address"/>
@@ -21,7 +21,7 @@
                 <field name="last_seen" optional="show"/>
                 <field name="gateway_debug" optional="hide"/>
                 <field name="active" widget="boolean_toggle"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -218,7 +218,7 @@
                     </div>
 
                     <widget name="web_ribbon" title="Неактивна" bg_color="bg-danger"
-                            attrs="{'invisible': [('active', '=', True)]}"/>
+                            invisible="active"/>
 
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only"/>
@@ -253,7 +253,7 @@
                                    options="{'no_create': True, 'no_open': True}"/>
                             <field name="partner_id"
                                    options="{'no_create': True, 'no_open': True}"
-                                   attrs="{'invisible': [('work_location_id', '!=', False)]}"/>
+                                   invisible="work_location_id"/>
                         </group>
                         <group>
                             <field name="location_description"
@@ -266,15 +266,15 @@
                     <group name="gateway_auth" string="Gateway Authentication" groups="base.group_system">
                         <group>
                             <field name="gateway_debug" widget="boolean_toggle"/>
-                            <field name="gateway_username" attrs="{'invisible': [('gateway_debug', '=', True)]}"/>
+                            <field name="gateway_username" invisible="gateway_debug"/>
                             <field name="gateway_password" password="True"
-                                   attrs="{'invisible': [('gateway_debug', '=', True)]}"
+                                   invisible="gateway_debug"
                                    placeholder="Въведете парола за автентикация..."/>
                         </group>
                         <group>
-                            <field name="gateway_realm" attrs="{'invisible': [('gateway_debug', '=', True)]}"/>
+                            <field name="gateway_realm" invisible="gateway_debug"/>
                             <field name="gateway_password_hash" readonly="1"
-                                   attrs="{'invisible': [('gateway_debug', '=', True)]}"
+                                   invisible="gateway_debug"
                                    groups="base.group_no_one"/>
                         </group>
                     </group>
@@ -326,7 +326,7 @@
 
                 <separator/>
                 <filter name="recent_activity" string="Активност последните 24ч"
-                        domain="[('last_seen','>=', (context_today() - datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"/>
+                        domain="[('last_seen','>=', (context_today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d'))]"/>
                 <filter name="no_activity" string="Без активност"
                         domain="[('last_seen','=',False)]"/>
 
@@ -350,7 +350,7 @@
     <record id="action_lpr_camera_config" model="ir.actions.act_window">
         <field name="name">LPR Cameras</field>
         <field name="res_model">lpr.camera.config</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">kanban,list,form</field>
         <field name="search_view_id" ref="view_lpr_camera_config_search"/>
         <field name="context">{
             'search_default_active': 1,

@@ -84,7 +84,8 @@ class LprCameraConfig(models.Model):
     serial_number = fields.Char('Serial Number', index=True,
                                 help="Сериен номер на LPR камерата")
 
-    # Използваме OCA product_manufacturer модула
+    # Моделът идва от product_manufacturer_data (product-attribute-expert),
+    # не от OCA product_manufacturer — там manufacturer_id сочи към res.partner
     manufacturer_id = fields.Many2one('product.manufacturer', string='Manufacturer',
                                       help="Производител на LPR камерата")
     model = fields.Char('Model', help="Модел на LPR камерата")
