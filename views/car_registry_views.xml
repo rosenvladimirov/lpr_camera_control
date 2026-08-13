@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Car Registry Form View -->
+    <record id="view_car_registry_form" model="ir.ui.view">
+        <field name="name">car.registry.form</field>
+        <field name="model">car.registry</field>
+        <field name="arch" type="xml">
+            <form string="Car Registry">
+                <header>
+                    <button name="action_sync_fleet_data" type="object"
+                            string="Sync Fleet Data" class="btn-primary"
+                            attrs="{'invisible': [('fleet_vehicle_id', '=', False)]}"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="Vehicle Information">
+                            <field name="license_plate"/>
+                            <field name="license_plate_original"/>
+                            <field name="fleet_vehicle_id"/>
+                            <field name="make"/>
+                            <field name="model"/>
+                            <field name="color"/>
+                            <field name="year"/>
+                        </group>
+                        <group string="Owner Information">
+                            <field name="employee_id"/>
+                            <field name="partner_id"/>
+                            <field name="access_type"/>
+                            <field name="is_active"/>
+                        </group>
+                    </group>
+                    <group string="Access Control">
+                        <group>
+                            <field name="access_start_date"/>
+                            <field name="access_end_date"/>
+                            <field name="access_time_start" widget="float_time"/>
+                            <field name="access_time_end" widget="float_time"/>
+                        </group>
+                        <group string="Days of Week">
+                            <field name="access_monday"/>
+                            <field name="access_tuesday"/>
+                            <field name="access_wednesday"/>
+                            <field name="access_thursday"/>
+                            <field name="access_friday"/>
+                            <field name="access_saturday"/>
+                            <field name="access_sunday"/>
+                        </group>
+                    </group>
+                    <group string="Statistics">
+                        <field name="total_entries"/>
+                        <field name="last_seen"/>
+                    </group>
+                    <group string="Notes">
+                        <field name="notes" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Car Registry Tree View -->
+    <record id="view_car_registry_tree" model="ir.ui.view">
+        <field name="name">car.registry.tree</field>
+        <field name="model">car.registry</field>
+        <field name="arch" type="xml">
+            <tree string="Car Registry">
+                <field name="license_plate"/>
+                <field name="owner_name"/>
+                <field name="fleet_vehicle_id"/>
+                <field name="make"/>
+                <field name="model"/>
+                <field name="access_type"/>
+                <field name="is_active"/>
+                <field name="last_seen"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_car_registry" model="ir.actions.act_window">
+        <field name="name">Car Registry</field>
+        <field name="res_model">car.registry</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_car_registry"
+              name="Car Registry"
+              parent="hr_attendance.menu_hr_attendance_root"
+              action="action_car_registry"
+              sequence="20"/>
+</odoo>

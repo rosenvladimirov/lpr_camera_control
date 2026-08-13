@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View за LPR Events -->
+    <record id="view_lpr_event_tree" model="ir.ui.view">
+        <field name="name">lpr.event.tree</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <tree decoration-success="access_granted == True and processing_status == 'processed'"
+                  decoration-danger="access_granted == False or processing_status == 'access_denied'"
+                  decoration-warning="processing_status == 'error'"
+                  decoration-muted="processing_status == 'ignored'">
+                <field name="event_time"/>
+                <field name="plate_number"/>
+                <field name="plate_number_normalized"/>
+                <field name="camera_id"/>
+                <field name="employee_id"/>
+                <field name="partner_id"/>
+                <field name="access_granted"/>
+                <field name="access_reason"/>
+                <field name="processing_status"/>
+                <field name="processed"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View за LPR Events -->
+    <record id="view_lpr_event_form" model="ir.ui.view">
+        <field name="name">lpr.event.form</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="processing_status" widget="statusbar" statusbar_visible="pending,processed,access_denied,error,ignored"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_attendance" type="object"
+                                class="oe_stat_button" icon="fa-clock-o"
+                                attrs="{'invisible': [('attendance_id', '=', False)]}">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Attendance</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="event_info" string="Информация за събитието">
+                            <field name="plate_number"/>
+                            <field name="plate_number_normalized" readonly="1"/>
+                            <field name="event_time"/>
+                            <field name="camera_time"/>
+                            <field name="camera_id"/>
+                            <field name="device_name"/>
+                        </group>
+                        <group name="access_control" string="Контрол на достъпа">
+                            <field name="access_granted" widget="boolean_toggle"/>
+                            <field name="access_reason"/>
+                            <field name="processed" widget="boolean_toggle"/>
+                            <field name="error_message" attrs="{'invisible': [('error_message', '=', False)]}"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group name="registry_info" string="Регистриран автомобил">
+                            <field name="car_registry_id"/>
+                            <field name="employee_id"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group name="attendance_info" string="Отчитане на работно време">
+                            <field name="attendance_id"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Сурови данни" name="raw_data">
+                            <group>
+                                <field name="raw_data" widget="ace" options="{'mode': 'json'}"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View за LPR Events -->
+    <record id="view_lpr_event_search" model="ir.ui.view">
+        <field name="name">lpr.event.search</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="plate_number"/>
+                <field name="plate_number_normalized"/>
+                <field name="camera_id"/>
+                <field name="employee_id"/>
+                <field name="partner_id"/>
+                <field name="device_name"/>
+                <field name="access_reason"/>
+
+                <filter string="Достъп разрешен" name="access_granted"
+                        domain="[('access_granted', '=', True)]"/>
+                <filter string="Достъп отказан" name="access_denied"
+                        domain="[('access_granted', '=', False)]"/>
+                <filter string="Необработени" name="not_processed"
+                        domain="[('processed', '=', False)]"/>
+                <filter string="Грешки" name="errors"
+                        domain="[('processing_status', '=', 'error')]"/>
+
+                <separator/>
+                <filter string="Днес" name="today"
+                        domain="[('event_time', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
+                                ('event_time', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]"/>
+                <filter string="Тази седмица" name="this_week"
+                        domain="[('event_time', '&gt;=', (context_today() - datetime.timedelta(days=context_today().weekday())).strftime('%%Y-%%m-%%d'))]"/>
+                <filter string="Този месец" name="this_month"
+                        domain="[('event_time', '&gt;=', datetime.datetime.now().strftime('%%Y-%%m-01'))]"/>
+
+                <group expand="0" string="Групиране">
+                    <filter string="Камера" name="group_camera" context="{'group_by': 'camera_id'}"/>
+                    <filter string="Статус" name="group_status" context="{'group_by': 'processing_status'}"/>
+                    <filter string="Достъп" name="group_access" context="{'group_by': 'access_granted'}"/>
+                    <filter string="Служител" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Дата" name="group_date" context="{'group_by': 'event_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Kanban View за LPR Events -->
+    <record id="view_lpr_event_kanban" model="ir.ui.view">
+        <field name="name">lpr.event.kanban</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="plate_number"/>
+                <field name="event_time"/>
+                <field name="camera_id"/>
+                <field name="access_granted"/>
+                <field name="processing_status"/>
+                <field name="employee_id"/>
+                <field name="partner_id"/>
+                <field name="access_reason"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_card oe_kanban_global_click #{record.access_granted.raw_value ? 'oe_kanban_color_2' : 'oe_kanban_color_1'}">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <t t-esc="record.plate_number.value"/>
+                                        </strong>
+                                        <br/>
+                                        <small class="o_kanban_record_subtitle">
+                                            <i class="fa fa-video-camera"/> <t t-esc="record.camera_id.value"/>
+                                        </small>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <span t-attf-class="badge #{record.access_granted.raw_value ? 'badge-success' : 'badge-danger'}">
+                                            <t t-esc="record.access_granted.raw_value ? 'Разрешен' : 'Отказан'"/>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body">
+                                    <div class="o_kanban_record_bottom">
+                                        <div class="oe_kanban_bottom_left">
+                                            <span class="o_kanban_record_subtitle">
+                                                <i class="fa fa-clock-o"/> <t t-esc="record.event_time.value"/>
+                                            </span>
+                                            <br/>
+                                            <span t-if="record.employee_id.raw_value" class="o_kanban_record_subtitle">
+                                                <i class="fa fa-user"/> <t t-esc="record.employee_id.value"/>
+                                            </span>
+                                            <span t-if="record.partner_id.raw_value" class="o_kanban_record_subtitle">
+                                                <i class="fa fa-users"/> <t t-esc="record.partner_id.value"/>
+                                            </span>
+                                        </div>
+                                        <div class="oe_kanban_bottom_right">
+                                            <span t-attf-class="badge badge-pill badge-#{record.processing_status.raw_value === 'processed' ? 'success' : (record.processing_status.raw_value === 'error' ? 'danger' : 'warning')}">
+                                                <t t-esc="record.processing_status.value"/>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div t-if="record.access_reason.raw_value" class="mt8">
+                                        <small class="text-muted">
+                                            <t t-esc="record.access_reason.value"/>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Calendar View за LPR Events -->
+    <record id="view_lpr_event_calendar" model="ir.ui.view">
+        <field name="name">lpr.event.calendar</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <calendar string="LPR Evenimente" date_start="event_time"
+                      color="processing_status" quick_add="False"
+                      event_open_popup="True">
+                <field name="plate_number"/>
+                <field name="camera_id"/>
+                <field name="access_granted"/>
+                <field name="processing_status"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Graph/Pivot View за статистики -->
+    <record id="view_lpr_event_graph" model="ir.ui.view">
+        <field name="name">lpr.event.graph</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <graph string="LPR Statistics">
+                <field name="event_time" type="row" interval="day"/>
+                <field name="access_granted" type="col"/>
+                <field name="camera_id" type="row"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_lpr_event_pivot" model="ir.ui.view">
+        <field name="name">lpr.event.pivot</field>
+        <field name="model">lpr.event</field>
+        <field name="arch" type="xml">
+            <pivot string="LPR Analysis">
+                <field name="event_time" type="row" interval="day"/>
+                <field name="camera_id" type="row"/>
+                <field name="access_granted" type="col"/>
+                <field name="processing_status" type="col"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- Action за LPR Events -->
+    <record id="action_lpr_event" model="ir.actions.act_window">
+        <field name="name">LPR События</field>
+        <field name="res_model">lpr.event</field>
+        <field name="view_mode">tree,form,kanban,calendar,graph,pivot</field>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Създайте първо LPR събитие!
+            </p>
+            <p>
+                LPR събитията се създават автоматично от камерите за разпознаване на номера.
+                Тук можете да видите всички засечени номера и статуса на достъпа.
+            </p>
+        </field>
+    </record>
+
+    <!-- Actions за различни филтри -->
+    <record id="action_lpr_event_today" model="ir.actions.act_window">
+        <field name="name">Днешни LPR събития</field>
+        <field name="res_model">lpr.event</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="context">{'search_default_today': 1}</field>
+        <field name="domain">[('event_time', '&gt;=', datetime.datetime.combine(context_today(), datetime.time(0,0,0))),
+                           ('event_time', '&lt;=', datetime.datetime.combine(context_today(), datetime.time(23,59,59)))]</field>
+    </record>
+
+    <record id="action_lpr_event_access_denied" model="ir.actions.act_window">
+        <field name="name">Отказан достъп</field>
+        <field name="res_model">lpr.event</field>
+        <field name="view_mode">tree,form,kanban</field>
+        <field name="context">{'search_default_access_denied': 1}</field>
+        <field name="domain">[('access_granted', '=', False)]</field>
+    </record>
+
+    <record id="action_lpr_event_errors" model="ir.actions.act_window">
+        <field name="name">LPR грешки</field>
+        <field name="res_model">lpr.event</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_errors': 1}</field>
+        <field name="domain">[('processing_status', '=', 'error')]</field>
+    </record>
+
+    <!-- Менюта -->
+    <menuitem id="menu_lpr_events_main"
+              name="LPR События"
+              parent="hr.menu_hr_root"
+              sequence="15"/>
+
+    <menuitem id="menu_lpr_events"
+              name="Всички събития"
+              parent="menu_lpr_events_main"
+              action="action_lpr_event"
+              sequence="10"/>
+
+    <menuitem id="menu_lpr_events_today"
+              name="Днешни събития"
+              parent="menu_lpr_events_main"
+              action="action_lpr_event_today"
+              sequence="20"/>
+
+    <menuitem id="menu_lpr_events_denied"
+              name="Отказан достъп"
+              parent="menu_lpr_events_main"
+              action="action_lpr_event_access_denied"
+              sequence="30"/>
+
+    <menuitem id="menu_lpr_events_errors"
+              name="Грешки"
+              parent="menu_lpr_events_main"
+              action="action_lpr_event_errors"
+              sequence="40"/>
+
+    <!-- Server Action за batch операции -->
+    <record id="action_server_reprocess_lpr_events" model="ir.actions.server">
+        <field name="name">Преобработи избраните събития</field>
+        <field name="model_id" ref="model_lpr_event"/>
+        <field name="binding_model_id" ref="model_lpr_event"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+for record in records:
+    if not record.processed or record.processing_status == 'error':
+        record._check_and_process_access(record)
+        </field>
+    </record>
+
+    <record id="action_server_mark_ignored" model="ir.actions.server">
+        <field name="name">Маркирай като игнорирани</field>
+        <field name="model_id" ref="model_lpr_event"/>
+        <field name="binding_model_id" ref="model_lpr_event"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+records.write({
+    'processing_status': 'ignored',
+    'processed': True
+})
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mqtt_service_form" model="ir.ui.view">
+        <field name="name">mqtt.listener.service.form</field>
+        <field name="model">mqtt.listener.service</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="start_mqtt_listener" string="Start MQTT Listener" type="object" class="btn-success"/>
+                    <button name="stop_mqtt_listener" string="Stop MQTT Listener" type="object" class="btn-danger"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>MQTT Listener Service</h1>
+                    </div>
+
+                    <group string="Service Status">
+                        <div class="alert alert-info">
+                            <p>Този сервиз слуша за LPR събития от MQTT брокъра в background режим.</p>
+                            <p>Когато получи ново събитие, автоматично създава запис в системата.</p>
+                        </div>
+                    </group>
+
+                    <group string="Configuration">
+                        <div class="alert alert-warning">
+                            <p><strong>MQTT Broker:</strong> 192.168.5.61:1883</p>
+                            <p><strong>Topics:</strong> lpr, lpr/+</p>
+                            <p><strong>Client ID:</strong> odoo_listener_[timestamp]</p>
+                        </div>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mqtt_service" model="ir.actions.act_window">
+        <field name="name">MQTT Listener Service</field>
+        <field name="res_model">mqtt.listener.service</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_mqtt_service"
+              name="MQTT Service"
+              parent="hr.menu_hr_configuration"
+              action="action_mqtt_service"
+              groups="hr.group_hr_manager"/>
+</odoo>

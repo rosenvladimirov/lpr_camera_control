@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="kiosk_fullscreen_template" name="LPR Camera Kiosk Fullscreen">
+        <t t-call="web.frontend_layout">
+            <t t-set="head_website">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <meta name="csrf-token" t-att-content="request.csrf_token()"/>
+                <title><t t-esc="page_title or 'LPR Camera Kiosk'"/></title>
+
+                <!-- Kiosk CSS -->
+                <link rel="stylesheet" type="text/css" href="//static/src/css/kiosk_camera.css"/>
+
+                <!-- Kiosk Configuration Script -->
+                <script>
+                    // Конфигурация за киоска
+                    window.KIOSK_CONFIG = {
+                        camera: <t t-raw="json.dumps({
+                            'id': camera.id,
+                            'name': camera.name,
+                            'location': camera.location,
+                            'ip_address': camera.ip_address,
+                            'active': camera.active
+                        })"/>,
+                        user: <t t-raw="json.dumps({
+                            'id': user.id,
+                            'name': user.name,
+                            'login': user.login
+                        })"/>,
+                        company: <t t-raw="json.dumps({
+                            'id': company.id,
+                            'name': company.name
+                        })"/>,
+                        kiosk_mode: true,
+                        csrf_token: '<t t-esc="request.csrf_token()"/>'
+                    };
+                </script>
+            </t>
+
+            <!-- Exit button -->
+            <div class="kiosk-header">
+                <a href="/lpr_camera/kiosk/exit" class="exit-kiosk">
+                    🚪 Изход от Киоск
+                </a>
+            </div>
+
+            <!-- Loading screen -->
+            <div id="kiosk-loading" class="kiosk-loading">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">
+                    <h2>🚗 Зареждане на LPR Kiosk</h2>
+                    <p>Моля изчакайте...</p>
+                </div>
+            </div>
+
+            <!-- Main kiosk container -->
+            <div id="kiosk-app-container" style="display: none;">
+                <!-- OWL компонентът ще се зареди тук чрез JavaScript -->
+            </div>
+        </t>
+    </template>
+</odoo>

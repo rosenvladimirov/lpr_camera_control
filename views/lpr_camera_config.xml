@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_lpr_camera_config_tree" model="ir.ui.view">
+        <field name="name">lpr.camera.config.tree</field>
+        <field name="model">lpr.camera.config</field>
+        <field name="arch" type="xml">
+            <tree string="LPR Cameras" sample="1" decoration-danger="connection_status=='offline'"
+                  decoration-success="connection_status=='online'" decoration-muted="not active">
+                <field name="name"/>
+                <field name="ip_address"/>
+                <field name="manufacturer_name" optional="hide"/>
+                <field name="model" optional="hide"/>
+                <field name="full_address" optional="show"/>
+                <field name="connection_status" widget="badge"
+                       decoration-success="connection_status=='online'"
+                       decoration-danger="connection_status=='offline'"
+                       decoration-warning="connection_status=='checking'"
+                       decoration-muted="connection_status=='unknown'"/>
+                <field name="last_seen" optional="show"/>
+                <field name="gateway_debug" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban View -->
+    <record id="view_lpr_camera_config_kanban" model="ir.ui.view">
+        <field name="name">lpr.camera.config.kanban</field>
+        <field name="model">lpr.camera.config</field>
+        <field name="arch" type="xml">
+            <kanban string="LPR Cameras" default_group_by="connection_status" sample="1"
+                    quick_create="false" class="o_kanban_dashboard">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="ip_address"/>
+                <field name="connection_status"/>
+                <field name="manufacturer_name"/>
+                <field name="model"/>
+                <field name="full_address"/>
+                <field name="last_seen"/>
+                <field name="installation_date"/>
+                <field name="active"/>
+                <field name="notes"/>
+                <field name="gateway_debug"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_kanban_record_has_image_fill">
+                            <div class="o_kanban_image">
+                                <!-- Connection Status Indicator -->
+                                <div class="o_kanban_image_fill_left d-flex align-items-center justify-content-center
+                                           text-white font-weight-bold" style="font-size: 24px;">
+                                    <t t-if="record.connection_status.raw_value == 'online'">
+                                        <i class="fa fa-circle text-success" style="font-size: 40px;" title="Онлайн"/>
+                                    </t>
+                                    <t t-elif="record.connection_status.raw_value == 'offline'">
+                                        <i class="fa fa-circle text-danger" style="font-size: 40px;" title="Офлайн"/>
+                                    </t>
+                                    <t t-elif="record.connection_status.raw_value == 'checking'">
+                                        <i class="fa fa-circle text-warning" style="font-size: 40px;" title="Проверява се"/>
+                                    </t>
+                                    <t t-else="">
+                                        <i class="fa fa-circle text-muted" style="font-size: 40px;" title="Неизвестно"/>
+                                    </t>
+                                </div>
+                            </div>
+
+                            <div class="oe_kanban_details">
+                                <!-- Header with Camera Name and Active Status -->
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <field name="name"/>
+                                            <t t-if="!record.active.raw_value">
+                                                <span class="badge badge-secondary ml-1">Неактивна</span>
+                                            </t>
+                                            <t t-if="record.gateway_debug.raw_value">
+                                                <span class="badge badge-warning ml-1">DEBUG</span>
+                                            </t>
+                                        </strong>
+                                        <small class="o_kanban_record_subtitle text-muted">
+                                            <i class="fa fa-desktop"/> <field name="ip_address"/>
+                                        </small>
+                                    </div>
+                                    <div class="o_kanban_record_top_right">
+                                        <!-- Quick Action Buttons -->
+                                        <div class="dropdown" groups="base.group_user">
+                                            <a class="dropdown-toggle o-no-caret btn" data-toggle="dropdown" href="#"
+                                               role="button" aria-label="Dropdown" title="Действия">
+                                                <span class="fa fa-ellipsis-v"/>
+                                            </a>
+                                            <div class="dropdown-menu" role="menu">
+                                                <a name="action_ping_camera" type="object" role="menuitem"
+                                                   class="dropdown-item">
+                                                    <i class="fa fa-wifi"/> Ping Camera
+                                                </a>
+                                                <a name="action_view_lpr_events" type="object" role="menuitem"
+                                                   class="dropdown-item">
+                                                    <i class="fa fa-list"/> View Events
+                                                </a>
+                                                <div class="dropdown-divider"/>
+                                                <a name="toggle_active" type="object" role="menuitem"
+                                                   class="dropdown-item">
+                                                    <i class="fa fa-archive"/>
+                                                    <t t-if="record.active.raw_value">Деактивирай</t>
+                                                    <t t-else="">Активирай</t>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Camera Details -->
+                                <div class="container o_kanban_card_content mt-2">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <!-- Manufacturer and Model -->
+                                            <t t-if="record.manufacturer_name.raw_value">
+                                                <div class="mb-1">
+                                                    <i class="fa fa-industry text-muted"/>
+                                                    <strong><field name="manufacturer_name"/></strong>
+                                                    <t t-if="record.model.raw_value">
+                                                        - <field name="model"/>
+                                                    </t>
+                                                </div>
+                                            </t>
+
+                                            <!-- Location -->
+                                            <t t-if="record.full_address.raw_value">
+                                                <div class="mb-1">
+                                                    <i class="fa fa-map-marker text-muted"/>
+                                                    <field name="full_address"/>
+                                                </div>
+                                            </t>
+
+                                            <!-- Last Seen -->
+                                            <t t-if="record.last_seen.raw_value">
+                                                <div class="mb-1">
+                                                    <i class="fa fa-clock-o text-muted"/>
+                                                    Последно видяна: <field name="last_seen"/>
+                                                </div>
+                                            </t>
+
+                                            <!-- Installation Date -->
+                                            <t t-if="record.installation_date.raw_value">
+                                                <div class="mb-1">
+                                                    <i class="fa fa-calendar text-muted"/>
+                                                    Инсталирана: <field name="installation_date"/>
+                                                </div>
+                                            </t>
+
+                                            <!-- Notes Preview -->
+                                            <t t-if="record.notes.raw_value">
+                                                <div class="mb-1">
+                                                    <i class="fa fa-sticky-note-o text-muted"/>
+                                                    <small class="text-muted">
+                                                        <field name="notes" widget="text"
+                                                               options="{'max_length': 60, 'truncate': true}"/>
+                                                    </small>
+                                                </div>
+                                            </t>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Footer with Status Badge -->
+                                <div class="o_kanban_record_bottom mt-2">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="connection_status" widget="label_selection"
+                                               options="{'classes': {
+                                                   'online': 'success',
+                                                   'offline': 'danger',
+                                                   'checking': 'warning',
+                                                   'unknown': 'secondary'
+                                               }}"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <!-- Action Buttons -->
+                                        <button name="action_ping_camera" type="object"
+                                                class="btn btn-sm btn-outline-primary"
+                                                title="Провери връзката">
+                                            <i class="fa fa-wifi"/>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_lpr_camera_config_form" model="ir.ui.view">
+        <field name="name">lpr.camera.config.form</field>
+        <field name="model">lpr.camera.config</field>
+        <field name="arch" type="xml">
+            <form string="LPR Camera Configuration">
+                <header>
+                    <button name="action_ping_camera" type="object" string="Ping Camera"
+                            class="btn-primary" icon="fa-wifi"/>
+                    <button name="action_view_lpr_events" type="object" string="View Events"
+                            class="btn-secondary" icon="fa-list"/>
+                    <field name="connection_status" widget="statusbar"
+                           statusbar_visible="unknown,checking,online,offline"/>
+                </header>
+
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_lpr_events" icon="fa-car">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">LPR</span>
+                                <span class="o_stat_text">События</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Неактивна" bg_color="bg-danger"
+                            attrs="{'invisible': [('active', '=', True)]}"/>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="Име на камерата..."/></h1>
+                        <div class="o_row">
+                            <field name="active" widget="boolean_toggle"/>
+                            <label for="active"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group name="basic_info" string="Основна информация">
+                            <field name="ip_address" widget="url"/>
+                            <field name="mac_address"/>
+                            <field name="serial_number"/>
+                            <field name="manufacturer_id"/>
+                            <field name="model"/>
+                            <field name="firmware_version"/>
+                        </group>
+
+                        <group name="connection_info" string="Информация за връзката">
+                            <field name="last_seen"/>
+                            <field name="installation_date"/>
+                            <field name="product_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                        </group>
+                    </group>
+
+                    <group name="location_info" string="Местоположение">
+                        <group>
+                            <field name="work_location_id"
+                                   options="{'no_create': True, 'no_open': True}"/>
+                            <field name="partner_id"
+                                   options="{'no_create': True, 'no_open': True}"
+                                   attrs="{'invisible': [('work_location_id', '!=', False)]}"/>
+                        </group>
+                        <group>
+                            <field name="location_description"
+                                   placeholder="Детайлно описание на местоположението..."/>
+                            <field name="full_address" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Gateway Authentication Settings -->
+                    <group name="gateway_auth" string="Gateway Authentication" groups="base.group_system">
+                        <group>
+                            <field name="gateway_debug" widget="boolean_toggle"/>
+                            <field name="gateway_username" attrs="{'invisible': [('gateway_debug', '=', True)]}"/>
+                            <field name="gateway_password" password="True"
+                                   attrs="{'invisible': [('gateway_debug', '=', True)]}"
+                                   placeholder="Въведете парола за автентикация..."/>
+                        </group>
+                        <group>
+                            <field name="gateway_realm" attrs="{'invisible': [('gateway_debug', '=', True)]}"/>
+                            <field name="gateway_password_hash" readonly="1"
+                                   attrs="{'invisible': [('gateway_debug', '=', True)]}"
+                                   groups="base.group_no_one"/>
+                        </group>
+                    </group>
+
+                    <group name="notes_group" string="Бележки">
+                        <field name="notes" nolabel="1"
+                               placeholder="Допълнителни бележки за камерата..."/>
+                    </group>
+                </sheet>
+
+                <!-- Премахнахме chatter секцията защото модела не наследява mail.thread -->
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_lpr_camera_config_search" model="ir.ui.view">
+        <field name="name">lpr.camera.config.search</field>
+        <field name="model">lpr.camera.config</field>
+        <field name="arch" type="xml">
+            <search string="Search LPR Cameras">
+                <field name="name" string="Камера"
+                       filter_domain="['|', ('name','ilike',self), ('ip_address','ilike',self)]"/>
+                <field name="ip_address"/>
+                <field name="manufacturer_name"/>
+                <field name="location_description"/>
+                <field name="full_address"/>
+                <field name="gateway_username"/>
+
+                <separator/>
+                <filter name="active" string="Активни" domain="[('active','=',True)]"/>
+                <filter name="inactive" string="Неактивни" domain="[('active','=',False)]"/>
+
+                <separator/>
+                <filter name="online" string="Онлайн"
+                        domain="[('connection_status','=','online')]"/>
+                <filter name="offline" string="Офлайн"
+                        domain="[('connection_status','=','offline')]"/>
+                <filter name="checking" string="Проверява се"
+                        domain="[('connection_status','=','checking')]"/>
+                <filter name="unknown" string="Неизвестно състояние"
+                        domain="[('connection_status','=','unknown')]"/>
+
+                <separator/>
+                <filter name="debug_mode" string="Debug режим"
+                        domain="[('gateway_debug','=',True)]"/>
+                <filter name="production_mode" string="Production режим"
+                        domain="[('gateway_debug','=',False)]"/>
+
+                <separator/>
+                <filter name="recent_activity" string="Активност последните 24ч"
+                        domain="[('last_seen','>=', (context_today() - datetime.timedelta(days=1)).strftime('%%Y-%%m-%%d'))]"/>
+                <filter name="no_activity" string="Без активност"
+                        domain="[('last_seen','=',False)]"/>
+
+                <group expand="0" string="Групиране по">
+                    <filter name="group_status" string="Състояние"
+                            context="{'group_by': 'connection_status'}"/>
+                    <filter name="group_manufacturer" string="Производител"
+                            context="{'group_by': 'manufacturer_id'}"/>
+                    <filter name="group_location" string="Работно място"
+                            context="{'group_by': 'work_location_id'}"/>
+                    <filter name="group_active" string="Активност"
+                            context="{'group_by': 'active'}"/>
+                    <filter name="group_debug" string="Debug режим"
+                            context="{'group_by': 'gateway_debug'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_lpr_camera_config" model="ir.actions.act_window">
+        <field name="name">LPR Cameras</field>
+        <field name="res_model">lpr.camera.config</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="search_view_id" ref="view_lpr_camera_config_search"/>
+        <field name="context">{
+            'search_default_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Създайте вашата първа LPR камера!
+            </p>
+            <p>
+                LPR камерите разпознават автомобилни номера и автоматично управляват достъпа
+                и отбелязването на служители.
+            </p>
+        </field>
+    </record>
+
+    <!-- Action for Ping All Cameras -->
+    <record id="action_ping_all_cameras" model="ir.actions.server">
+        <field name="name">Ping All Cameras</field>
+        <field name="model_id" ref="model_lpr_camera_config"/>
+        <field name="binding_model_id" ref="model_lpr_camera_config"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">
+action = model.action_ping_all_cameras()
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_lpr_camera_config_root"
+              name="LPR Cameras"
+              parent="hr.menu_hr_root"
+              groups="hr.group_hr_user"
+              sequence="25"/>
+
+    <menuitem id="menu_lpr_camera_config"
+              name="Camera Configuration"
+              parent="menu_lpr_camera_config_root"
+              action="action_lpr_camera_config"
+              sequence="10"/>
+
+    <!-- Dashboard Action -->
+    <record id="action_lpr_camera_dashboard" model="ir.actions.act_window">
+        <field name="name">LPR Camera Dashboard</field>
+        <field name="res_model">lpr.camera.config</field>
+        <field name="view_mode">kanban</field>
+        <field name="search_view_id" ref="view_lpr_camera_config_search"/>
+        <field name="context">{
+            'search_default_active': 1,
+            'search_default_group_status': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Добре дошли в LPR Camera Dashboard!
+            </p>
+            <p>
+                Тук можете да видите състоянието на всички LPR камери в реално време.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_lpr_camera_dashboard"
+              name="Camera Dashboard"
+              parent="menu_lpr_camera_config_root"
+              action="action_lpr_camera_dashboard"
+              sequence="5"/>
+
+</odoo>

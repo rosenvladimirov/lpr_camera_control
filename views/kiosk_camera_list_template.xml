@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="kiosk_camera_list_template" name="LPR Camera Kiosk List">
+        <t t-call="web.frontend_layout">
+            <t t-set="head_website">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <meta name="csrf-token" t-att-content="request.csrf_token()"/>
+                <title>LPR Camera Kiosk - Избор на камера</title>
+
+                <!-- Kiosk CSS -->
+                <link rel="stylesheet" type="text/css" href="//static/src/css/kiosk_camera.css"/>
+            </t>
+
+            <div class="lpr-kiosk-container">
+                <!-- Header -->
+                <div class="lpr-header">
+                    <div class="lpr-title">
+                        <h1>🚗 LPR Camera Kiosk</h1>
+                        <div class="camera-info">
+                            <span class="camera-name">Избор на камера</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Selection -->
+                <div class="camera-selection-content">
+                    <div class="selection-header">
+                        <h2>Изберете камера за мониториране:</h2>
+                    </div>
+
+                    <div class="cameras-grid">
+                        <t t-foreach="cameras" t-as="camera">
+                            <div class="camera-card">
+                                <div class="camera-card-header">
+                                    <h3 t-esc="camera.name"/>
+                                    <span t-if="camera.active" class="status-badge active">Активна</span>
+                                    <span t-else="" class="status-badge inactive">Неактивна</span>
+                                </div>
+
+                                <div class="camera-card-body">
+                                    <div class="camera-info-item">
+                                        <strong>Местоположение:</strong>
+                                        <span t-esc="camera.location or 'Не е зададено'"/>
+                                    </div>
+
+                                    <div class="camera-info-item">
+                                        <strong>IP адрес:</strong>
+                                        <span t-esc="camera.ip_address"/>
+                                    </div>
+
+                                    <t t-if="camera.go2rtc_server">
+                                        <div class="camera-info-item">
+                                            <strong>Go2RTC сървър:</strong>
+                                            <span t-esc="camera.go2rtc_server"/>
+                                        </div>
+                                    </t>
+                                </div>
+
+                                <div class="camera-card-footer">
+                                    <t t-if="camera.active and camera.kiosk_mode">
+                                        <a t-attf-href="/lpr_camera/kiosk/#{camera.id}"
+                                           class="btn btn-primary btn-fullwidth">
+                                            🎯 Отвори Kiosk
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <button class="btn btn-secondary btn-fullwidth" disabled="disabled">
+                                            Недостъпна за Kiosk
+                                        </button>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+
+                    <!-- No cameras message -->
+                    <t t-if="not cameras">
+                        <div class="no-cameras">
+                            <div class="no-cameras-content">
+                                <i class="fa fa-camera fa-3x"/>
+                                <h3>Няма конфигурирани камери</h3>
+                                <p>Моля, конфигурирайте камери от администраторския панел.</p>
+                                <a href="/web" class="btn btn-primary">
+                                    🔧 Администраторски панел
+                                </a>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Footer -->
+                <div class="lpr-footer">
+                    <div class="footer-info">
+                        <span>LPR Camera Stream System</span>
+                    </div>
+                    <div class="footer-controls">
+                        <a href="/web" class="btn btn-secondary">
+                            🏠 Начало
+                        </a>
+                        <button id="refresh-cameras" class="btn btn-info" onclick="location.reload()">
+                            🔄 Обнови
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

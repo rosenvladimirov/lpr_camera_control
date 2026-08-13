@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Разширение на attendance kiosk template за LPR интеграция -->
+    <template id="attendance_kiosk_lpr_inherit" inherit_id="hr_attendance.public_kiosk_mode" name="LPR Camera Extension">
+
+        <!-- Добавяме LPR CSS файлове -->
+        <xpath expr="//t[@t-call-assets='hr_attendance.assets_public_attendance'][@t-css='false']" position="after">
+            <link rel="stylesheet" href="//static/src/css/attendance_kiosk_extension.css"/>
+        </xpath>
+
+        <!-- Добавяме LPR JavaScript модули -->
+        <xpath expr="//script[contains(text(), 'hr_attendance.public_kiosk_app')]" position="after">
+            <script type="text/javascript">
+                // Зареждаме LPR разширенията за attendance kiosk
+                odoo.define("lpr_camera_control.attendance_kiosk_loader",
+                    ["@lpr_camera_control/js/attendance_kiosk_extension"],
+                    function (require) {
+                        console.log("🚗 LPR Attendance Kiosk Extension загружен успешно");
+                        // Модулът ще се автоматично patch-не през patch() системата
+                        return {};
+                    }
+                );
+            </script>
+        </xpath>
+
+        <!-- Добавяме placeholder за LPR статус (ще се попълни от JS) -->
+        <xpath expr="//body[@class='o_web_client o_hr_attendance_kiosk_body position-relative']" position="inside">
+            <!-- LPR Status контейнер за JavaScript интеграция -->
+            <div id="lpr-status-container" class="lpr-status-container"></div>
+
+            <!-- Placeholder за динамичен LPR интерфейс -->
+            <div id="lpr-dynamic-interface" class="lpr-dynamic-interface"></div>
+        </xpath>
+
+    </template>
+</odoo>

@@ -1,0 +1,249 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="webrtc_player_template" name="WebRTC Player">
+        <t t-call="web.layout">
+            <div class="webrtc-player-container">
+                <h2>WebRTC Stream: <t t-esc="camera.name"/></h2>
+
+                <div class="video-container">
+                    <video id="webrtc-video" autoplay="autoplay" muted="muted" playsinline="playsinline" controls="controls" style="width: 100%; max-height: 70vh;"></video>
+                </div>
+
+                <div class="stream-controls">
+                    <button id="start-stream" class="btn btn-success">Start Stream</button>
+                    <button id="stop-stream" class="btn btn-danger">Stop Stream</button>
+                    <span id="stream-status" class="badge badge-secondary">Stopped</span>
+                </div>
+
+                <div class="stream-info">
+                    <small id="connection-info" class="text-muted">Initializing...</small>
+                </div>
+
+                <!-- Използвайте локалната версия 9.0.2 -->
+                <script src="//static/lib/adapter.js"></script>
+                <script>
+                    class WebRTCPlayer {
+                        constructor(videoElement, streamUrl) {
+                            this.video = videoElement;
+                            this.streamUrl = streamUrl;
+                            this.pc = null;
+                            this.ws = null;
+                            this.isLocal = this._detectNetworkType();
+                            this._updateConnectionInfo();
+                        }
+
+                        _detectNetworkType() {
+                            const hostname = window.location.hostname;
+                            const port = window.location.port;
+
+                            // Проверка за localhost
+                            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                                return { type: 'localhost', useIce: false };
+                            }
+
+                            // Проверка за private IP ranges (RFC 1918)
+                            if (hostname.startsWith('192.168.') ||
+                                hostname.startsWith('10.') ||
+                                hostname.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) {
+                                return { type: 'private', useIce: false };
+                            }
+
+                            // Проверка за link-local (169.254.x.x)
+                            if (hostname.startsWith('169.254.')) {
+                                return { type: 'link-local', useIce: false };
+                            }
+
+                            // Проверка за development ports
+                            if (port && (port === '8069' || port === '8080' || port === '3000' || port === '8000')) {
+                                return { type: 'development', useIce: false };
+                            }
+
+                            // За публични IP или неизвестни - използвайте ICE
+                            return { type: 'public', useIce: true };
+                        }
+
+                        _getIceConfiguration() {
+                            if (!this.isLocal.useIce) {
+                                console.log(`🌐 ${this.isLocal.type} network detected - using direct connection (no ICE servers)`);
+                                return {
+                                    iceServers: []
+                                };
+                            }
+
+                            console.log(`🌍 ${this.isLocal.type} network detected - using ICE servers for NAT traversal`);
+                            return {
+                                iceServers: [
+                                    { urls: 'stun:stun.l.google.com:19302' },
+                                    { urls: 'stun:stun1.l.google.com:19302' },
+                                    // Добавете собствени STUN/TURN сървъри ако имате
+                                ],
+                                iceCandidatePoolSize: 10
+                            };
+                        }
+
+                        _updateConnectionInfo() {
+                            const infoEl = document.getElementById('connection-info');
+                            if (infoEl) {
+                                const networkType = this.isLocal.type;
+                                const iceStatus = this.isLocal.useIce ? 'with ICE servers' : 'direct connection';
+                                infoEl.textContent = `Network: ${networkType} (${iceStatus})`;
+                                infoEl.className = this.isLocal.useIce ? 'text-warning' : 'text-success';
+                            }
+                        }
+
+                        async start() {
+                            try {
+                                console.log('🚀 Starting WebRTC connection...');
+
+                                // Създаваме PeerConnection с подходящата конфигурация
+                                const config = this._getIceConfiguration();
+                                this.pc = new RTCPeerConnection(config);
+
+                                // Debugging на ICE процеса
+                                this.pc.oniceconnectionstatechange = () => {
+                                    console.log(`🧊 ICE Connection State: ${this.pc.iceConnectionState}`);
+                                    this._updateStatus(`ICE: ${this.pc.iceConnectionState}`);
+                                };
+
+                                this.pc.onconnectionstatechange = () => {
+                                    console.log(`🔗 Connection State: ${this.pc.connectionState}`);
+                                    this._updateStatus(`Connection: ${this.pc.connectionState}`);
+                                };
+
+                                this.pc.onicecandidateError = (event) => {
+                                    console.warn('🚨 ICE Candidate Error:', event);
+                                };
+
+                                this.pc.onicecandidate = (event) => {
+                                    if (event.candidate) {
+                                        console.log('🧊 ICE Candidate:', event.candidate.type, event.candidate.protocol);
+                                    } else {
+                                        console.log('🧊 ICE Candidate gathering complete');
+                                    }
+                                };
+
+                                this.pc.ontrack = (event) => {
+                                    console.log('📺 Remote track received');
+                                    this.video.srcObject = event.streams[0];
+                                    document.getElementById('stream-status').textContent = 'Playing';
+                                    document.getElementById('stream-status').className = 'badge badge-success';
+                                    this._updateStatus('Stream playing');
+                                };
+
+                                // Create offer
+                                console.log('📤 Creating WebRTC offer...');
+                                const offer = await this.pc.createOffer({
+                                    offerToReceiveVideo: true,
+                                    offerToReceiveAudio: true
+                                });
+
+                                await this.pc.setLocalDescription(offer);
+                                console.log('📝 Local description set');
+
+                                // Send offer to go2rtc
+                                console.log('📡 Sending offer to go2rtc...');
+                                const response = await fetch('<t t-esc="webrtc_url"/>', {
+                                    method: 'POST',
+                                    headers: {'Content-Type': 'application/json'},
+                                    body: JSON.stringify({
+                                        type: 'offer',
+                                        sdp: offer.sdp
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                                }
+
+                                const answer = await response.json();
+                                console.log('📨 Received answer from go2rtc');
+
+                                await this.pc.setRemoteDescription(answer);
+                                console.log('✅ Remote description set - WebRTC negotiation complete');
+
+                                this._updateStatus('Connected');
+
+                            } catch (error) {
+                                console.error('❌ WebRTC error:', error);
+                                document.getElementById('stream-status').textContent = 'Error';
+                                document.getElementById('stream-status').className = 'badge badge-danger';
+                                this._updateStatus(`Error: ${error.message}`);
+
+                                // Ако е мрежова грешка, предложете решение
+                                if (error.message.includes('fetch')) {
+                                    this._updateStatus('Check go2rtc server connection');
+                                }
+                            }
+                        }
+
+                        stop() {
+                            console.log('🛑 Stopping WebRTC connection...');
+
+                            if (this.pc) {
+                                this.pc.close();
+                                this.pc = null;
+                            }
+
+                            this.video.srcObject = null;
+                            document.getElementById('stream-status').textContent = 'Stopped';
+                            document.getElementById('stream-status').className = 'badge badge-secondary';
+                            this._updateStatus('Stopped');
+                        }
+
+                        _updateStatus(message) {
+                            const infoEl = document.getElementById('connection-info');
+                            if (infoEl) {
+                                const timestamp = new Date().toLocaleTimeString();
+                                infoEl.textContent = `${message} (${timestamp})`;
+                            }
+                        }
+
+                        // Диагностична информация
+                        async getConnectionStats() {
+                            if (this.pc) {
+                                const stats = await this.pc.getStats();
+                                stats.forEach(report => {
+                                    if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                        console.log('🏆 Active ICE candidate pair:', report);
+                                    }
+                                });
+                            }
+                        }
+                    }
+
+                    document.addEventListener('DOMContentLoaded', function() {
+                        console.log('🎬 WebRTC Player initializing...');
+
+                        const video = document.getElementById('webrtc-video');
+                        const player = new WebRTCPlayer(video, '<t t-esc="webrtc_url"/>');
+
+                        // Показваме информация за мрежата
+                        console.log(`🌐 Network detected: ${player.isLocal.type}, ICE servers: ${player.isLocal.useIce ? 'enabled' : 'disabled'}`);
+
+                        document.getElementById('start-stream').onclick = () => {
+                            console.log('👆 Start button clicked');
+                            player.start();
+                        };
+
+                        document.getElementById('stop-stream').onclick = () => {
+                            console.log('👆 Stop button clicked');
+                            player.stop();
+                        };
+
+                        // Добавяме бутон за диагностика (опционално)
+                        const diagnosticBtn = document.createElement('button');
+                        diagnosticBtn.textContent = '🔍 Debug Info';
+                        diagnosticBtn.className = 'btn btn-sm btn-info ml-2';
+                        diagnosticBtn.onclick = () => player.getConnectionStats();
+                        document.querySelector('.stream-controls').appendChild(diagnosticBtn);
+
+                        // Auto-start
+                        console.log('⚡ Auto-starting stream...');
+                        player.start();
+                    });
+                </script>
+            </div>
+        </t>
+    </template>
+</odoo>

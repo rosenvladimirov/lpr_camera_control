@@ -1,0 +1,776 @@
+/* ========================= LPR VISUAL EFFECTS ========================= */
+
+/* Flash Effects */
+.lpr-flash-green {
+    animation: flashGreen 0.8s ease-in-out;
+    border: 3px solid #28a745 !important;
+    box-shadow: 0 0 20px rgba(40, 167, 69, 0.6) !important;
+}
+
+.lpr-flash-red {
+    animation: flashRed 0.8s ease-in-out;
+    border: 3px solid #dc3545 !important;
+    box-shadow: 0 0 20px rgba(220, 53, 69, 0.6) !important;
+}
+
+.lpr-pulse {
+    animation: pulse 1.5s infinite;
+}
+
+.lpr-shake {
+    animation: shake 0.6s ease-in-out;
+}
+
+@keyframes flashGreen {
+    0%, 100% { background-color: transparent; }
+    25% { background-color: rgba(40, 167, 69, 0.1); }
+    50% { background-color: rgba(40, 167, 69, 0.2); }
+    75% { background-color: rgba(40, 167, 69, 0.1); }
+}
+
+@keyframes flashRed {
+    0%, 100% { background-color: transparent; }
+    25% { background-color: rgba(220, 53, 69, 0.1); }
+    50% { background-color: rgba(220, 53, 69, 0.2); }
+    75% { background-color: rgba(220, 53, 69, 0.1); }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+.lpr-event-new {
+    background: linear-gradient(45deg, #e3f2fd, #ffffff) !important;
+    animation: newEventGlow 3s ease-out;
+    border-left: 4px solid #2196f3 !important;
+}
+
+@keyframes newEventGlow {
+    0% { box-shadow: 0 0 15px rgba(33, 150, 243, 0.5); }
+    50% { box-shadow: 0 0 25px rgba(33, 150, 243, 0.3); }
+    100% { box-shadow: none; }
+}
+
+.lpr-overlay-success {
+    background: linear-gradient(135deg, #4caf50, #81c784) !important;
+    color: white !important;
+    animation: successGlow 0.5s ease-in-out;
+}
+
+.lpr-overlay-error {
+    background: linear-gradient(135deg, #f44336, #ef5350) !important;
+    color: white !important;
+    animation: errorShake 0.6s ease-in-out;
+}
+
+@keyframes successGlow {
+    0% { box-shadow: 0 0 0 rgba(76, 175, 80, 0.7); }
+    50% { box-shadow: 0 0 30px rgba(76, 175, 80, 0.4); }
+    100% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.2); }
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+.lpr-status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.lpr-status-connected {
+    background-color: #4caf50;
+    animation: connectedPulse 2s infinite;
+}
+
+.lpr-status-disconnected {
+    background-color: #f44336;
+    animation: disconnectedBlink 1s infinite;
+}
+
+@keyframes connectedPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+@keyframes disconnectedBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+/* Parking Event Effects */
+.lpr-parking-entry {
+    animation: parkingEntryEffect 1s ease-in-out;
+}
+
+.lpr-parking-exit {
+    animation: parkingExitEffect 1s ease-in-out;
+}
+
+@keyframes parkingEntryEffect {
+    0% { transform: scale(1); background-color: rgba(33, 150, 243, 0); }
+    50% { transform: scale(1.02); background-color: rgba(33, 150, 243, 0.1); }
+    100% { transform: scale(1); background-color: rgba(33, 150, 243, 0); }
+}
+
+@keyframes parkingExitEffect {
+    0% { transform: scale(1); background-color: rgba(156, 39, 176, 0); }
+    50% { transform: scale(1.02); background-color: rgba(156, 39, 176, 0.1); }
+    100% { transform: scale(1); background-color: rgba(156, 39, 176, 0); }
+}
+
+/* ========================= EXISTING BASE STYLES ========================= */
+
+/* Base kiosk styles */
+.lpr-kiosk-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+/* Header */
+.lpr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.lpr-title h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.camera-info {
+    margin-top: 8px;
+    display: flex;
+    gap: 20px;
+}
+
+.camera-name, .camera-location {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+/* ========================= CONNECTION STATUS ========================= */
+
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.connection-status.connected {
+    background: rgba(76, 175, 80, 0.2);
+    border: 2px solid #4caf50;
+}
+
+.connection-status.disconnected {
+    background: rgba(244, 67, 54, 0.2);
+    border: 2px solid #f44336;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+.connected .status-indicator {
+    background: #4caf50;
+}
+
+.disconnected .status-indicator {
+    background: #f44336;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Status badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: rgba(76, 175, 80, 0.3);
+    color: #4caf50;
+    border: 1px solid #4caf50;
+}
+
+.status-badge.inactive {
+    background: rgba(244, 67, 54, 0.3);
+    color: #f44336;
+    border: 1px solid #f44336;
+}
+
+/* ========================= MAIN CONTENT LAYOUT ========================= */
+
+.lpr-main-content {
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Camera Section */
+.camera-section {
+    flex: 2;
+}
+
+.camera-container {
+    position: relative;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.camera-placeholder, .stream-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.placeholder-content i {
+    margin-bottom: 20px;
+}
+
+/* ========================= EVENT OVERLAY ========================= */
+
+.event-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.overlay-content {
+    text-align: center;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.event-plate h2 {
+    font-size: 4rem;
+    margin: 0 0 30px 0;
+    font-weight: 800;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 4px;
+}
+
+/* ========================= PROCESSING STATUS & SPINNERS ========================= */
+
+.processing-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.spinner, .loading-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================= ACCESS RESULTS ========================= */
+
+.access-granted {
+    color: #4caf50;
+}
+
+.access-granted i {
+    color: #4caf50;
+    margin-bottom: 20px;
+}
+
+.access-denied {
+    color: #f44336;
+}
+
+.access-denied i {
+    color: #f44336;
+    margin-bottom: 20px;
+}
+
+.access-result h3 {
+    font-size: 2.5rem;
+    margin: 20px 0;
+    font-weight: 700;
+}
+
+/* ========================= EVENTS SECTION ========================= */
+
+.events-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.events-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.events-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.events-controls .btn {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
+
+/* Events List */
+.events-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.events-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.events-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.no-events {
+    text-align: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Event Items */
+.event-item {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.event-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px);
+}
+
+.event-item.access-granted {
+    border-left-color: #4caf50;
+}
+
+.event-item.access-denied {
+    border-left-color: #f44336;
+}
+
+.event-item.pending {
+    border-left-color: #ff9800;
+}
+
+.event-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.event-plate {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.event-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 0.9rem;
+}
+
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status.pending {
+    background: rgba(255, 152, 0, 0.2);
+    color: #ff9800;
+}
+
+.status.granted {
+    background: rgba(76, 175, 80, 0.2);
+    color: #4caf50;
+}
+
+.status.denied {
+    background: rgba(244, 67, 54, 0.2);
+    color: #f44336;
+}
+
+/* ========================= FOOTER ========================= */
+
+.lpr-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.footer-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.footer-info {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.bus-status.connected {
+    color: #4caf50;
+}
+
+.bus-status.disconnected {
+    color: #f44336;
+}
+
+/* ========================= CAMERA SELECTION STYLES ========================= */
+
+.camera-selection-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.selection-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.selection-header h2 {
+    font-size: 2rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.cameras-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+/* Camera Cards */
+.camera-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.camera-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.camera-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.camera-card-header h3 {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.camera-card-body {
+    margin-bottom: 25px;
+}
+
+.camera-info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.camera-info-item strong {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+}
+
+.camera-info-item span {
+    color: white;
+    text-align: right;
+    max-width: 60%;
+    word-break: break-all;
+}
+
+.camera-card-footer {
+    margin-top: auto;
+}
+
+/* No Cameras */
+.no-cameras {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+}
+
+.no-cameras-content {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 50px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.no-cameras-content i {
+    margin-bottom: 25px;
+    opacity: 0.6;
+}
+
+.no-cameras-content h3 {
+    font-size: 1.8rem;
+    margin: 0 0 15px 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.no-cameras-content p {
+    margin-bottom: 25px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.1rem;
+}
+
+/* ========================= BUTTONS ========================= */
+
+.btn {
+    display: inline-block;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #4caf50, #45a049);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #45a049, #3d8b40);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+}
+
+.btn-info {
+    background: linear-gradient(45deg, #2196f3, #1976d2);
+    color: white;
+}
+
+.btn-info:hover {
+    background: linear-gradient(45deg, #1976d2, #1565c0);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+.btn-fullwidth {
+    width: 100%;
+}
+
+/* ========================= RESPONSIVE STYLES ========================= */
+
+@media (max-width: 1200px) {
+    .lpr-main-content {
+        flex-direction: column;
+    }
+
+    .camera-section {
+        flex: none;
+        height: 50vh;
+    }
+
+    .events-section {
+        flex: none;
+        height: 300px;
+    }
+
+    .cameras-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .lpr-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .events-controls {
+        justify-content: center;
+    }
+
+    .footer-controls {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .cameras-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .camera-selection-content {
+        padding: 15px;
+    }
+
+    .selection-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .camera-card {
+        padding: 20px;
+    }
+
+    .camera-info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .camera-info-item span {
+        max-width: 100%;
+        text-align: left;
+    }
+}

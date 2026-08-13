@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_parking_session_tree" model="ir.ui.view">
+        <field name="name">parking.session.tree</field>
+        <field name="model">parking.session</field>
+        <field name="arch" type="xml">
+            <tree decoration-info="state == 'active'" decoration-muted="state == 'completed'">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="plate_number"/>
+                <field name="start_time"/>
+                <field name="end_time"/>
+                <field name="duration_text"/>
+                <field name="state"/>
+                <field name="location_zone"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_parking_session_form" model="ir.ui.view">
+        <field name="name">parking.session.form</field>
+        <field name="model">parking.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_complete_session"
+                            string="Complete Session"
+                            type="object"
+                            class="btn-primary"
+                            invisible="state != 'active'"/>
+                    <button name="action_view_payment_info"
+                            string="Payment Info"
+                            type="object"
+                            class="btn-info"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="partner_id"/>
+                            <field name="plate_number"/>
+                            <field name="car_registry_id"/>
+                            <field name="location_zone"/>
+                        </group>
+                        <group>
+                            <field name="start_time"/>
+                            <field name="end_time"/>
+                            <field name="duration" widget="float_time"/>
+                            <field name="duration_text"/>
+                        </group>
+                    </group>
+                    <group string="LPR Events">
+                        <group>
+                            <field name="entry_event_id"/>
+                            <field name="entry_camera_id"/>
+                        </group>
+                        <group>
+                            <field name="exit_event_id"/>
+                            <field name="exit_camera_id"/>
+                        </group>
+                    </group>
+                    <field name="notes"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_parking_session" model="ir.actions.act_window">
+        <field name="name">Parking Sessions</field>
+        <field name="res_model">parking.session</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_parking_session_search" model="ir.ui.view">
+        <field name="name">parking.session.search</field>
+        <field name="model">parking.session</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="plate_number"/>
+                <field name="partner_id"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Completed" name="completed" domain="[('state', '=', 'completed')]"/>
+                <group expand="1" string="Group By">
+                    <filter string="Partner" name="partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="State" name="state" context="{'group_by': 'state'}"/>
+                    <filter string="Location" name="location" context="{'group_by': 'location_zone'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Menu -->
+    <menuitem id="menu_parking_sessions"
+              name="Parking Sessions"
+              parent="hr_attendance.menu_hr_attendance_root"
+              action="action_parking_session"
+              sequence="30"/>
+
+</odoo>

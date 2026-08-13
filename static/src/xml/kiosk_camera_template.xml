@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="KioskCameraTemplate" name="LPR Camera Kiosk Template">
+        <div class="lpr-kiosk-container">
+            <!-- Header with status -->
+            <div class="lpr-header">
+                <div class="lpr-title">
+                    <h1>🚗 LPR Camera Kiosk</h1>
+                    <div class="camera-info" t-if="state.camera">
+                        <span class="camera-name">📹 <t t-esc="state.camera.name"/></span>
+                        <span class="camera-location" t-if="state.camera.location">
+                            📍 <t t-esc="state.camera.location"/>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="lpr-status">
+                    <div t-attf-class="connection-status {{connectionStatusClass}}">
+                        <span class="status-indicator"></span>
+                        <span class="status-text" t-esc="connectionStatusText"/>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content area -->
+            <div class="lpr-main-content">
+                <!-- Camera stream section -->
+                <div class="camera-section">
+                    <div class="camera-container">
+                        <div class="camera-placeholder" t-if="!state.camera">
+                            <div class="placeholder-content">
+                                <i class="fa fa-camera fa-3x"/>
+                                <p>Няма конфигурирана камера</p>
+                            </div>
+                        </div>
+
+                        <div class="camera-stream" t-if="state.camera">
+                            <!-- Camera stream would be rendered here -->
+                            <div class="stream-placeholder">
+                                <i class="fa fa-video-camera fa-2x"/>
+                                <p>Camera Stream: <t t-esc="state.camera.name"/></p>
+                                <small t-if="state.camera.ip_address">IP: <t t-esc="state.camera.ip_address"/></small>
+                            </div>
+                        </div>
+
+                        <!-- Overlay for current event -->
+                        <div t-if="isOverlayVisible" class="event-overlay">
+                            <div t-if="currentOverlayEvent" class="overlay-content">
+                                <div class="event-plate">
+                                    <h2 t-esc="currentOverlayEvent.plate"/>
+                                </div>
+
+                                <div t-if="currentOverlayEvent.processing" class="processing-status">
+                                    <div class="spinner"></div>
+                                    <p>Обработване...</p>
+                                </div>
+
+                                <div t-if="!currentOverlayEvent.processing" class="access-result">
+                                    <div t-if="currentOverlayEvent.access_granted" class="access-granted">
+                                        <i class="fa fa-check-circle fa-3x"/>
+                                        <h3>ДОСТЪП РАЗРЕШЕН</h3>
+                                        <p t-if="currentOverlayEvent.owner_name" t-esc="currentOverlayEvent.owner_name"/>
+                                        <small t-if="currentOverlayEvent.access_reason" t-esc="currentOverlayEvent.access_reason"/>
+                                    </div>
+
+                                    <div t-if="!currentOverlayEvent.access_granted" class="access-denied">
+                                        <i class="fa fa-times-circle fa-3x"/>
+                                        <h3>ДОСТЪП ОТКАЗАН</h3>
+                                        <p t-if="currentOverlayEvent.access_reason" t-esc="currentOverlayEvent.access_reason"/>
+                                    </div>
+                                </div>
+
+                                <div class="event-info">
+                                    <small>
+                                        <i class="fa fa-clock-o"/> <t t-esc="currentOverlayEvent.time"/>
+                                        <span t-if="currentOverlayEvent.camera_name">
+                                            | <i class="fa fa-camera"/> <t t-esc="currentOverlayEvent.camera_name"/>
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events panel -->
+                <div class="events-section">
+                    <div class="events-header">
+                        <h3><i class="fa fa-list"/> Последни събития</h3>
+                        <div class="events-controls">
+                            <!-- Test buttons -->
+                            <button class="btn btn-sm btn-info" t-if="canSendNotifications"
+                                    t-on-click="() => this.triggerLprEvent('TEST001')">
+                                <i class="fa fa-car"/> Test LPR
+                            </button>
+                            <button class="btn btn-sm btn-success" t-if="canSendNotifications"
+                                    t-on-click="() => this.triggerAccessResult('TEST002', true)">
+                                <i class="fa fa-check"/> Test Access OK
+                            </button>
+                            <button class="btn btn-sm btn-danger" t-if="canSendNotifications"
+                                    t-on-click="() => this.triggerAccessResult('TEST003', false)">
+                                <i class="fa fa-times"/> Test Access Denied
+                            </button>
+                            <button class="btn btn-sm btn-warning" t-if="canSendNotifications"
+                                    t-on-click="testBusNotification">
+                                <i class="fa fa-flask"/> Test Bus
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="events-list">
+                        <div t-if="!eventsList.length" class="no-events">
+                            <p><i class="fa fa-info-circle"/> Няма събития за показване</p>
+                        </div>
+
+                        <div t-foreach="eventsList" t-as="event" t-key="event.id || event_index"
+                             t-attf-class="event-item {{event.access_granted ? 'access-granted' : (event.access_granted === false ? 'access-denied' : 'pending')}}">
+
+                            <div class="event-header">
+                                <div class="event-plate">
+                                    <strong t-esc="event.plate"/>
+                                </div>
+                                <div class="event-time">
+                                    <small t-esc="event.timestamp and event.timestamp.toLocaleTimeString() or 'N/A'"/>
+                                </div>
+                            </div>
+
+                            <div class="event-details">
+                                <div t-if="event.owner_name" class="event-owner">
+                                    <i class="fa fa-user"/> <t t-esc="event.owner_name"/>
+                                </div>
+
+                                <div class="event-status">
+                                    <span t-if="event.processing_status === 'pending'" class="status pending">
+                                        <i class="fa fa-clock-o"/> Обработване...
+                                    </span>
+                                    <span t-if="event.access_granted === true" class="status granted">
+                                        <i class="fa fa-check"/> Разрешен
+                                    </span>
+                                    <span t-if="event.access_granted === false" class="status denied">
+                                        <i class="fa fa-times"/> Отказан
+                                    </span>
+                                </div>
+
+                                <div t-if="event.access_reason" class="event-reason">
+                                    <small t-esc="event.access_reason"/>
+                                </div>
+
+                                <div t-if="event.camera_name" class="event-camera">
+                                    <small><i class="fa fa-camera"/> <t t-esc="event.camera_name"/></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer with additional controls -->
+            <div class="lpr-footer">
+                <div class="footer-controls" t-if="canSendNotifications">
+                    <button class="btn btn-primary" t-on-click="() => this.broadcastToAllClients('Тестово broadcast съобщение')">
+                        <i class="fa fa-bullhorn"/> Broadcast Test
+                    </button>
+                    <button class="btn btn-info" t-on-click="() => this.triggerAttendanceEvent('Тестов Служител')">
+                        <i class="fa fa-clock-o"/> Attendance Test
+                    </button>
+                    <button class="btn btn-warning" t-on-click="() => this.triggerErrorEvent('Тестова грешка')">
+                        <i class="fa fa-exclamation-triangle"/> Error Test
+                    </button>
+                </div>
+
+                <div class="footer-info">
+                    <small>
+                        Bus Status: <span t-attf-class="bus-status {{hasBusConnection ? 'connected' : 'disconnected'}}">
+                            {{hasBusConnection ? '🟢 Connected' : '🔴 Disconnected'}}
+                        </span>
+                        | Events: <t t-esc="eventsList.length"/>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </template>
+</odoo>
